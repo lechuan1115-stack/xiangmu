@@ -29,11 +29,11 @@ parser.add_argument('--class_num', type=int, default=10)#class_num表示类别�
 parser.add_argument('-j', '--workers', default=0, type=int,#-j/-workers表示数据加载的进程，“0”表示不使用多线程
                      help="number of data loading workers (default: 4)")
 parser.add_argument('--batch-size', type=int, default=64)#batch-size批量大小（每次输入模型的数据量）是256
-parser.add_argument('--lr-model', type=float, default=0.009, help="learning rate for model")# lr-model 模型的学习率，对于wifi数据集开始的学习率应该设置大点
+parser.add_argument('--lr-model', type=float, default=0.0015, help="learning rate for model")# lr-model 模型的学习率，对于wifi数据集开始的学习率应该设置大点
 parser.add_argument('--lr-cent', type=float, default=0.1, help="learning rate for center loss")#中心损失的学习率
 parser.add_argument('--max-epoch', type=int, default=100)  #训练总轮次
 parser.add_argument('--stepsize', type=int, default=10) # 学习率的调整步长：每隔多少epoch调整一次学习率
-parser.add_argument('--gamma', type=float, default=0.75, help="learning rate decay")  # 学习率衰减因子，每stepsize轮，学习率会乘以这个因子
+parser.add_argument('--gamma', type=float, default=0.6, help="learning rate decay")  # 学习率衰减因子，每stepsize轮，学习率会乘以这个因子
 
 # model：模型结构
 parser.add_argument('--model', type=str, default='P4AllCNN') #选择使用的模型结构：P4AllCNN   CNN_Transformer_memory  CNN_Transformer
@@ -127,12 +127,11 @@ def main():
         criterion_xent = nn.NLLLoss() # 定义交叉熵损失函数
 
         # 定义CNN的优化器
-        # optimizer_model = torch.optim.Adam(model.parameters(), lr=args.lr_model)#adam优化器
-        optimizer_model = torch.optim.SGD(model.parameters(), lr=args.lr_model, weight_decay=5e-04, momentum=0.9)#sgd优化器，weight_decay：权重衰减，momentum：动量，用于加速收敛速度
+        optimizer_model = torch.optim.AdamW(model.parameters(), lr=args.lr_model, weight_decay=5e-04)#采用AdamW优化器，稳定性更好
         if args.stepsize > 0:
-            scheduler1 = lr_scheduler.ExponentialLR(optimizer_model, 0.9, last_epoch=-1)#使用指数衰减调度器，每次调用scheduler.step()，学习率乘以 0.9。
-            # scheduler = lr_scheduler.StepLR(optimizer_model, step_size=args.stepsize, gamma=args.gamma)# 适用于一开始学习率小的网络
-            scheduler_warmup = GradualWarmupScheduler(optimizer_model, multiplier=1, total_epoch=8, after_scheduler=scheduler1)#使用warmup（预热）调度器，再接scheduler1。前 8 个 epoch 用较慢的线性学习率上升（warmup），第9个 epoch 接入指数衰减调度器 scheduler1，有利于稳定训练初期。
+            cosine_epochs = max(args.max_epoch - 8, 1)
+            scheduler1 = lr_scheduler.CosineAnnealingLR(optimizer_model, T_max=cosine_epochs, eta_min=args.lr_model * args.gamma)
+            scheduler_warmup = GradualWarmupScheduler(optimizer_model, multiplier=1, total_epoch=8, after_scheduler=scheduler1)#使用warmup（预热）调度器，再接scheduler1。前 8 个 epoch 用较慢的线性学习率上升（warmup），之后接入余弦退火调度器，有利于稳定训练初期并改进收敛质量。
         # print(path1)
         early_stopping = EarlyStopping(patience=patience, verbose=True, path=path1)#早停机制：启用 EarlyStopping，当验证损失连续 patience 个 epoch 没有改善时，提前停止训练，并保存最佳模型到 path1。
         # 初始化各类统计信息，分别记录训练验证的准确率与损失
