@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser("Example")
 parser.add_argument('--class_num', type=int, default=100)
 parser.add_argument('--batch-size', type=int, default=1)  # 推理场景通常为1
 parser.add_argument('--lr-model', type=float, default=0.009, help="learning rate for model")
-parser.add_argument('--model', type=str, default='P4AllCNN')  # CNN_Transformer_memory / CNN_Transformer
+parser.add_argument('--model', type=str, default='P4AllCNN')  # 模型可选：P4AllCNN 或 CNN_Transformer
 parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--method', choices=['threshold','softmax','openmax'], default='openmax',
                     help="选择推理方法：threshold（阈值法），softmax（闭/混合集），openmax（OpenMax）")
