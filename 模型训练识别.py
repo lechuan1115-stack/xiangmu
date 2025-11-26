@@ -36,7 +36,7 @@ parser.add_argument('--stepsize', type=int, default=10) # 学习率的调整步�
 parser.add_argument('--gamma', type=float, default=0.6, help="learning rate decay")  # 学习率衰减因子，每stepsize轮，学习率会乘以这个因子
 
 # model：模型结构
-parser.add_argument('--model', type=str, default='P4AllCNN') #选择使用的模型结构：P4AllCNN   CNN_Transformer_memory  CNN_Transformer
+parser.add_argument('--model', type=str, default='P4AllCNN') #选择使用的模型结构：P4AllCNN 或 CNN_Transformer
 
 # misc：杂项设置
 parser.add_argument('--eval-freq', type=int, default=1)# 模型验证评估的频率，每多少个epoch在验证集上评估一次模型，默认为每轮都评估
@@ -96,7 +96,7 @@ def main():
             # validate_set = mydata_read.SignalDataset1(valfilepath)
             # test_set = mydata_read.SignalDataset1(testfilepath)
         else:
-            train_set = mydata_read.SignalDataset2(filepath)
+            data_set = mydata_read.SignalDataset2(filepath)
             # validate_set = mydata_read.SignalDataset2(valfilepath)
             # test_set = mydata_read.SignalDataset2(testfilepath)
             # mix_dataset = ConcatDataset([train_set, validate_set])
